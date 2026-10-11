@@ -20,7 +20,7 @@ internal/metrics     as 5 métricas do enunciado + saída em CSV
 scripts/             criar_issues.sh (organiza o GitHub) e executar.sh (5 execuções → CSV)
 resultados/          CSV, tabela, gráficos e prints
 relatorio/           ambiente.md, rascunhos e o PDF final
-apresentacao/        slides
+apresentacao/        banco de perguntas e roteiro de execução ao vivo
 CHECKLIST.md         tudo que o enunciado cobra, item por item
 ```
 
@@ -58,9 +58,9 @@ if cfg.CSV { fmt.Println(m.LinhaCSV()) } else { m.Imprimir() }
 | Código | Setup, config/métricas, **V0**, **V2** | **V1**, **V3** | Revisão cruzada, CI |
 | Experimentos | Investigação da V2 | Evidência do deadlock da V1 | Script, 5 execuções, tabela, gráficos |
 | Relatório | Perguntas 1–3 de V0/V2 | Perguntas 1–6 de V1/V3 | Ambiente, págs. 1 e 2, perguntas 7–12 |
-| Apresentação | Fala sobre V0/V2 | Demo ao vivo | Slides |
+| Arguição oral | Treina respostas sobre V0/V2 | Roteiro de execução ao vivo | Banco de perguntas |
 
-Conclusão, revisão final do PDF e ensaio são de todos. Todos precisam saber explicar todas as versões (cai na Prova 1).
+A apresentação é oral, sem slides: uma pessoa responde às perguntas da professora. Conclusão, revisão final do PDF e simulação de arguição são de todos, e quem for apresentar precisa dominar as quatro versões e as métricas (também cai na Prova 1).
 
 ## Fluxo de trabalho
 

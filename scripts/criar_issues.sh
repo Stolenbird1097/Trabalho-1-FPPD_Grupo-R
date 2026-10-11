@@ -28,7 +28,7 @@ label "v3"              "0e8a16" "Versão concorrente aprimorada"
 label "codigo"          "1d76db" "Implementação em Go"
 label "experimento"     "5319e7" "Medições e execuções"
 label "relatorio"       "0052cc" "Relatório em PDF"
-label "apresentacao"    "b60205" "Apresentação presencial"
+label "apresentacao"    "b60205" "Arguição oral com a professora"
 label "infra"           "bfdadc" "Repositório, scripts, CI"
 label "obrigatorio"     "e11d21" "Item cobrado explicitamente no enunciado"
 
@@ -40,7 +40,7 @@ M1="1. Setup";            milestone "$M1" "Repositório, código compartilhado e
 M2="2. Implementações";   milestone "$M2" "V0, V1, V2 e V3 funcionando"
 M3="3. Experimentos";     milestone "$M3" "5 execuções por versão, tabela e gráficos"
 M4="4. Relatório";        milestone "$M4" "PDF completo respondendo as 12 perguntas"
-M5="5. Apresentação";     milestone "$M5" "Slides, demo e ensaio"
+M5="5. Apresentação";     milestone "$M5" "Arguição oral: banco de perguntas, roteiro e simulação"
 
 # ---------- Issues ----------
 issue() { # titulo labels milestone responsavel corpo
@@ -246,27 +246,33 @@ EOF
 )"
 
 # ===== 5. Apresentação =====
-issue "Slides da apresentação" "apresentacao" "$M5" "$C" "$(cat <<'EOF'
-- [ ] Problema e as 4 versões
-- [ ] Deadlock da V1 (diagrama da espera circular)
-- [ ] Tabela e gráficos
-- [ ] Respostas-chave (perguntas 10–12)
-- [ ] Dividir as falas entre os três
+issue "Banco de perguntas da arguição" "apresentacao" "$M5" "$C" "$(cat <<'EOF'
+A apresentação é **oral, sem slides**: uma pessoa do grupo responde às perguntas da professora.
+Montar em `apresentacao/perguntas.md` uma lista de perguntas prováveis com respostas curtas e os números da tabela:
+- [ ] As 12 perguntas do relatório (seção 4.1)
+- [ ] "Mostre no código onde está o mutex / canal / WaitGroup de cada versão"
+- [ ] "Quais são as 4 condições de deadlock? Qual delas a V3 quebra?"
+- [ ] "O que mudaria com 10 filósofos? E se o tempo de comer fosse maior?"
+- [ ] "Por que a V2 é correta mas lenta?" / "A V3 pode ter starvation?"
+- [ ] "Como vocês mediram o tempo de espera?" / "Por que 5 execuções?"
+- [ ] "De onde veio cada solução e o que vocês adaptaram?"
 EOF
 )"
 
-issue "Demonstração ao vivo" "apresentacao,v1,v3" "$M5" "$B" "$(cat <<'EOF'
-- [ ] Roteiro: V1 travando (modo forçado) → V2 lenta → V3 rápida
-- [ ] Testar no notebook que será levado
-- [ ] Ter prints e vídeo de reserva caso algo falhe
+issue "Roteiro de execução ao vivo" "apresentacao,v1,v3" "$M5" "$B" "$(cat <<'EOF'
+Caso a professora peça para rodar o código, quem apresentar precisa fazer isso sem hesitar.
+- [ ] Comandos prontos em `apresentacao/roteiro.md`: V1 travando (modo forçado) → V2 → V3
+- [ ] Testar no notebook que será levado, com o repositório já clonado e compilado
+- [ ] Prints e a tabela abertos como reserva, caso algo falhe
 EOF
 )"
 
-issue "Ensaio geral – todos explicam todas as versões" "apresentacao" "$M5" "" "$(cat <<'EOF'
-Os três precisam estar presentes, e o conteúdo cai na **Prova 1**.
-- [ ] Cada integrante explica as 4 versões sem ler
-- [ ] Cada integrante responde as 12 perguntas do relatório
-- [ ] Ensaio cronometrado
+issue "Simulação de arguição – qualquer um pode ser quem apresenta" "apresentacao" "$M5" "" "$(cat <<'EOF'
+Tarefa de **todos**. Só uma pessoa responde, mas o conteúdo cai na **Prova 1** e o enunciado pede os três presentes.
+- [ ] Definir quem apresenta (ou confirmar com a professora se ela sorteia na hora)
+- [ ] Rodadas em que os outros dois fazem o papel da professora, usando o banco de perguntas
+- [ ] Quem apresenta explica as 4 versões e abre o código certo sem ler o relatório
+- [ ] Revisar juntos as respostas que travaram
 EOF
 )"
 

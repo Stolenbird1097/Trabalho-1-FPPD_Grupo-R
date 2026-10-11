@@ -49,7 +49,9 @@ Cada linha aponta para a issue que cobre o item. Antes de entregar, **todas** pr
 - [ ] Ambiente: linguagem e versão, SO, processador, nº de cores, comandos de compilação/execução
 - [ ] Máquina multicore
 
-## Apresentação (50% da nota)
+## Apresentação oral (50% da nota) – sem slides, uma pessoa responde à professora
 - [ ] Os três presentes
-- [ ] Demo: V1 travando, V2 e V3 rodando
-- [ ] Todos sabem explicar tudo (conteúdo da Prova 1)
+- [ ] Quem apresenta definido e treinado com o banco de perguntas
+- [ ] Sabe abrir e explicar o código de cada versão
+- [ ] Consegue rodar V1 (travando), V2 e V3 se for pedido
+- [ ] Responde citando os números da tabela
