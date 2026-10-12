@@ -91,11 +91,11 @@ func Philosopher(id int, wg *sync.WaitGroup) {
 		// comer
 		show(id, fmt.Sprintf(" E%d", i))
 		time.Sleep(time_to_eat * time.Millisecond)
+		stopEating(id) // terminou de comer (antes de soltar os garfos, para a contagem ser exata)
 
 		// soltar os garfos e só então a permissão
 		forks[right].Unlock()
 		forks[left].Unlock()
-		stopEating(id)
 		<-waiter // signal (V): libera a vez
 	}
 }
