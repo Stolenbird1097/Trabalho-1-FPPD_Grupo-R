@@ -1,102 +1,112 @@
-// V3 – Sem deadlock e com mais concorrência (ordenação de recursos).
-//
-// Cada filósofo é uma goroutine e cada garfo é um sync.Mutex, como na V1.
-// A única mudança é a ORDEM de aquisição: todo filósofo pega primeiro o
-// garfo de MENOR número e depois o de maior número (hierarquia de recursos,
-// proposta por Dijkstra).
-//
-// Para F1..F4 isso é igual à V1 (esquerdo, depois direito). Já F5, cujos
-// garfos são G4 (esquerdo) e G0 (direito), passa a pegar G0 primeiro. Assim
-// F1 e F5 disputam G0 como PRIMEIRO garfo: quem perde fica esperando sem
-// segurar nada.
-//
-// Por que não há deadlock: numa espera circular, cada filósofo esperaria um
-// garfo de número maior do que o que já segura (G_a < G_b < ... < G_a), o que
-// é impossível. A condição de espera circular é eliminada, e sem ela não há
-// deadlock, mesmo mantendo exclusão mútua, segura-e-espera e não preempção.
-//
-// Concorrência: não há trava global; quem não divide garfos come ao mesmo
-// tempo. Com 5 filósofos e 5 garfos, até 2 comem juntos (5/2 arredondado
-// para baixo), que é o máximo possível no problema.
-//
-// Starvation: em teoria é possível (nada garante que um filósofo vença a
-// disputa de um garfo). Na prática é muito improvável aqui, porque o
-// sync.Mutex do Go entra em "modo de inanição" quando uma goroutine espera
-// mais de 1 ms e passa a entregar o lock em ordem FIFO, e porque cada
-// filósofo pensa entre as refeições, dando chance aos vizinhos. A métrica
-// "ciclos por filósofo" (todos com 20) e o "maior tempo de espera" mostram
-// isso experimentalmente.
-//
-// Execução:  go run ./cmd/v3-concorrente  [-v] [-csv]
+// V3 - Concurrent Dining Philosophers without deadlock (resource ordering)
+// Same as V1, with one change: every philosopher takes the fork with the
+// LOWER number first. Philosophers 1-4 behave like V1, but philosopher 5
+// (forks 4 and 0) takes fork 0 first. This breaks the circular wait,
+// so there is no deadlock, and up to 2 philosophers can eat together.
 package main
 
 import (
 	"fmt"
 	"sync"
 	"time"
-
-	"github.com/SEU-USUARIO/filosofos-jantando/internal/config"
-	"github.com/SEU-USUARIO/filosofos-jantando/internal/metrics"
 )
 
+const (
+	philosophers  = 5
+	rounds        = 20
+	time_to_think = 20 // ms (same in V0, V1, V2, V3)
+	time_to_eat   = 30 // ms (same in V0, V1, V2, V3)
+)
+
+var forks [philosophers]sync.Mutex
+
+// ---------- metrics (same code in all versions) ----------
+var (
+	mu                sync.Mutex
+	totalWait         time.Duration
+	maxWait           time.Duration
+	waits             int
+	eating, maxEating int
+	cycles            [philosophers]int
+)
+
+func startEating(wait time.Duration) {
+	mu.Lock()
+	totalWait += wait
+	waits++
+	if wait > maxWait {
+		maxWait = wait
+	}
+	eating++
+	if eating > maxEating {
+		maxEating = eating
+	}
+	mu.Unlock()
+}
+
+func stopEating(id int) {
+	mu.Lock()
+	eating--
+	cycles[id]++
+	mu.Unlock()
+}
+
+func report(version string, elapsed time.Duration) {
+	avg := totalWait / time.Duration(waits)
+	fmt.Printf("\n%s took %s\n", version, elapsed)
+	fmt.Printf("Average wait for forks: %s\n", avg)
+	fmt.Printf("Max wait for forks:     %s\n", maxWait)
+	fmt.Printf("Max eating together:    %d\n", maxEating)
+	fmt.Printf("Cycles per philosopher: %v\n", cycles)
+	// last line in CSV (used by scripts/executar.sh)
+	ms := func(d time.Duration) float64 { return float64(d.Microseconds()) / 1000 }
+	fmt.Printf("%s,%.3f,%.3f,%.3f,%d,%d|%d|%d|%d|%d\n", version, ms(elapsed), ms(avg), ms(maxWait),
+		maxEating, cycles[0], cycles[1], cycles[2], cycles[3], cycles[4])
+}
+
+func show(id int, text string) { fmt.Printf("%*s%s\n", id*6, "", text) }
+
+// ---------------------------------------------------------
+
+func Philosopher(id int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	first := id
+	second := (id + 1) % philosophers
+	if first > second { // always the lower fork number first
+		first, second = second, first
+	}
+
+	for i := 1; i <= rounds; i++ {
+		// think
+		show(id, fmt.Sprintf(" T%d", i))
+		time.Sleep(time_to_think * time.Millisecond)
+
+		// get forks: lower number first
+		start := time.Now()
+		forks[first].Lock()
+		forks[second].Lock()
+		startEating(time.Since(start))
+
+		// eat
+		show(id, fmt.Sprintf(" E%d", i))
+		time.Sleep(time_to_eat * time.Millisecond)
+
+		// release forks
+		forks[second].Unlock()
+		forks[first].Unlock()
+		stopEating(id)
+	}
+}
+
 func main() {
-	cfg := config.Carregar()
-	m := metrics.Nova("V3", config.NumFilosofos)
+	fmt.Println("\n [P1]  [P2]  [P3]  [P4]  [P5]")
 
-	var garfos [config.NumFilosofos]sync.Mutex
-
-	log := func(formato string, args ...any) {
-		if cfg.Verbose {
-			fmt.Printf(formato+"\n", args...)
-		}
-	}
-
-	filosofo := func(id int, wg *sync.WaitGroup) {
-		defer wg.Done()
-		esq, dir := id, (id+1)%config.NumFilosofos
-
-		// Ordem global: menor número primeiro.
-		primeiro, segundo := esq, dir
-		if primeiro > segundo {
-			primeiro, segundo = segundo, primeiro
-		}
-
-		for ciclo := 1; ciclo <= config.NumCiclos; ciclo++ {
-			// 1. Pensar
-			log("F%d pensando (ciclo %d)", id+1, ciclo)
-			time.Sleep(cfg.TempoPensar)
-
-			// 2. Adquirir na ordem global
-			inicio := time.Now()
-			garfos[primeiro].Lock()
-			garfos[segundo].Lock()
-			m.RegistrarEspera(id, time.Since(inicio))
-
-			// 3. Comer
-			log("F%d comendo com G%d e G%d", id+1, primeiro, segundo)
-			m.ComecouAComer()
-			time.Sleep(cfg.TempoComer)
-			m.TerminouDeComer()
-
-			// 4. Liberar (ordem inversa, por convenção)
-			garfos[segundo].Unlock()
-			garfos[primeiro].Unlock()
-			m.CicloConcluido(id)
-		}
-	}
-
-	m.Iniciar()
 	var wg sync.WaitGroup
-	for id := 0; id < config.NumFilosofos; id++ {
+	start := time.Now()
+	for j := 0; j < philosophers; j++ {
 		wg.Add(1)
-		go filosofo(id, &wg)
+		go Philosopher(j, &wg)
 	}
 	wg.Wait()
-	m.Finalizar()
-
-	if cfg.CSV {
-		fmt.Println(m.LinhaCSV())
-	} else {
-		m.Imprimir()
-	}
+	report("V3", time.Since(start))
 }

@@ -1,76 +1,95 @@
-// V0 – Versão sequencial (baseline).
-//
-// Os filósofos NÃO executam ao mesmo tempo: existe uma única linha de
-// execução (a goroutine main) que faz, em rodízio, um ciclo completo de cada
-// filósofo:
-//
-//	pensar → adquirir garfos → comer → liberar garfos
-//
-// Como só um filósofo está ativo por vez, nunca há disputa pelos garfos:
-// não existe deadlock, starvation nem condição de corrida, e no máximo 1
-// filósofo come por vez. O tempo total é a soma de todos os tempos de
-// pensar e comer (5 filósofos × 20 ciclos × (pensar + comer)), por isso esta
-// versão serve de referência para medir o ganho das versões concorrentes.
-//
-// Execução:  go run ./cmd/v0-sequencial  [-v] [-csv]
+// V0 - Sequential Dining Philosophers (baseline)
+// Based on filo_seq.go by Cesar De Rose (Moodle).
+// One philosopher at a time: no concurrency, no forks dispute.
+// Expected time = rounds * philosophers * (time_to_think + time_to_eat)
 package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
-
-	"github.com/SEU-USUARIO/filosofos-jantando/internal/config"
-	"github.com/SEU-USUARIO/filosofos-jantando/internal/metrics"
 )
 
-// Na versão sequencial um garfo é só um booleano "em uso": como não há
-// concorrência, não é preciso nenhum mecanismo de sincronização.
-var garfos [config.NumFilosofos]bool
+const (
+	philosophers  = 5
+	rounds        = 20
+	time_to_think = 20 // ms (same in V0, V1, V2, V3)
+	time_to_eat   = 30 // ms (same in V0, V1, V2, V3)
+)
 
-func esquerdo(id int) int { return id }
-func direito(id int) int  { return (id + 1) % config.NumFilosofos }
+// ---------- metrics (same code in all versions) ----------
+var (
+	mu                sync.Mutex
+	totalWait         time.Duration
+	maxWait           time.Duration
+	waits             int
+	eating, maxEating int
+	cycles            [philosophers]int
+)
+
+func startEating(wait time.Duration) {
+	mu.Lock()
+	totalWait += wait
+	waits++
+	if wait > maxWait {
+		maxWait = wait
+	}
+	eating++
+	if eating > maxEating {
+		maxEating = eating
+	}
+	mu.Unlock()
+}
+
+func stopEating(id int) {
+	mu.Lock()
+	eating--
+	cycles[id]++
+	mu.Unlock()
+}
+
+func report(version string, elapsed time.Duration) {
+	avg := totalWait / time.Duration(waits)
+	fmt.Printf("\n%s took %s\n", version, elapsed)
+	fmt.Printf("Average wait for forks: %s\n", avg)
+	fmt.Printf("Max wait for forks:     %s\n", maxWait)
+	fmt.Printf("Max eating together:    %d\n", maxEating)
+	fmt.Printf("Cycles per philosopher: %v\n", cycles)
+	// last line in CSV (used by scripts/executar.sh)
+	ms := func(d time.Duration) float64 { return float64(d.Microseconds()) / 1000 }
+	fmt.Printf("%s,%.3f,%.3f,%.3f,%d,%d|%d|%d|%d|%d\n", version, ms(elapsed), ms(avg), ms(maxWait),
+		maxEating, cycles[0], cycles[1], cycles[2], cycles[3], cycles[4])
+}
+
+func show(id int, text string) { fmt.Printf("%*s%s\n", id*6, "", text) }
+
+// ---------------------------------------------------------
+
+func Philosopher(id, iteration int) {
+	// think
+	show(id, fmt.Sprintf(" T%d", iteration))
+	time.Sleep(time_to_think * time.Millisecond)
+
+	// get forks (nobody else is running, so no waiting)
+	start := time.Now()
+	startEating(time.Since(start))
+
+	// eat
+	show(id, fmt.Sprintf(" E%d", iteration))
+	time.Sleep(time_to_eat * time.Millisecond)
+
+	// release forks
+	stopEating(id)
+}
 
 func main() {
-	cfg := config.Carregar()
-	m := metrics.Nova("V0", config.NumFilosofos)
+	fmt.Println("\n [P1]  [P2]  [P3]  [P4]  [P5]")
 
-	log := func(formato string, args ...any) {
-		if cfg.Verbose {
-			fmt.Printf(formato+"\n", args...)
+	start := time.Now()
+	for i := 1; i <= rounds; i++ {
+		for j := 0; j < philosophers; j++ {
+			Philosopher(j, i)
 		}
 	}
-
-	m.Iniciar()
-	for ciclo := 1; ciclo <= config.NumCiclos; ciclo++ {
-		for id := 0; id < config.NumFilosofos; id++ {
-			// 1. Pensar
-			log("[ciclo %2d] Filósofo %d pensando", ciclo, id+1)
-			time.Sleep(cfg.TempoPensar)
-
-			// 2. Adquirir os garfos (nunca espera: ninguém mais está ativo)
-			inicio := time.Now()
-			garfos[esquerdo(id)] = true
-			garfos[direito(id)] = true
-			m.RegistrarEspera(id, time.Since(inicio))
-
-			// 3. Comer
-			log("[ciclo %2d] Filósofo %d comendo com garfos %d e %d",
-				ciclo, id+1, esquerdo(id), direito(id))
-			m.ComecouAComer()
-			time.Sleep(cfg.TempoComer)
-			m.TerminouDeComer()
-
-			// 4. Liberar os garfos
-			garfos[esquerdo(id)] = false
-			garfos[direito(id)] = false
-			m.CicloConcluido(id)
-		}
-	}
-	m.Finalizar()
-
-	if cfg.CSV {
-		fmt.Println(m.LinhaCSV())
-	} else {
-		m.Imprimir()
-	}
+	report("V0", time.Since(start))
 }
