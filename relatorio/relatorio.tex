@@ -1,7 +1,6 @@
 % Relatório - Trabalho 1 de FPPD: Jantar dos Filósofos
 % Compilar:  pdflatex relatorio.tex   (ou no Overleaf)
-% ATENÇÃO: os números marcados como PROVISÓRIOS devem ser trocados pelos
-% resultados do notebook do grupo (./scripts/executar.sh) antes da entrega.
+% Números: média de 5 execuções de cada versão (resultados/resultados.csv).
 \documentclass[11pt,a4paper]{article}
 
 \usepackage[utf8]{inputenc}
@@ -15,6 +14,7 @@
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{graphicx}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.16}
 \usepackage[hidelinks]{hyperref}
@@ -39,13 +39,13 @@
 \begin{center}
   {\Large\bfseries Trabalho 1 -- Concorrência e Sincronização:\\[2pt]
   O Problema dos Filósofos Jantando}\\[6pt]
-  Fundamentos de Processamento Paralelo e Distribuído -- Prof.\ De Rose
+  Fundamentos de Processamento Paralelo e Distribuído -- Profª.\ Eduarda Monteiro\\[2pt]
 \end{center}
 
 \begin{tabularx}{\textwidth}{@{}lY@{}}
 \toprule
 Grupo & R \\
-Integrantes & \preencher{Nome A} \textperiodcentered{} \preencher{Nome B} \textperiodcentered{} \preencher{Nome C} \\
+Integrantes & Arthur Pimentel \textperiodcentered{} Raffaella Aranha \textperiodcentered{} Tiago Prudencio \\
 Repositório Git & \preencher{link do repositório} (pasta \texttt{cmd/}, uma subpasta por versão) \\
 \bottomrule
 \end{tabularx}
@@ -79,19 +79,19 @@ V3 -- Concorrente & Igual à V1, mas todos pegam primeiro o garfo de menor núme
 As métricas usam um \texttt{sync.Mutex} próprio, porque os 5 filósofos atualizam os mesmos
 contadores ao mesmo tempo. O tempo é medido com \texttt{time.Now()} e \texttt{time.Since()}.
 
-\section*{Análise comparativa \provisorio}
+\section*{Análise comparativa}
 
-A V3 foi a mais rápida (1,75\,s em média), 2,9 vezes mais rápida que a V0 (5,07\,s), porque
+A V3 foi a mais rápida (1,72\,s em média), 3,0 vezes mais rápida que a V0 (5,22\,s), porque
 deixa 2 filósofos comerem ao mesmo tempo. A V2 não trava, mas o garçom limita a mesa a 1
-filósofo comendo por vez. Por isso ela leva 3,08\,s e tem a maior espera pelos garfos:
-100\,ms em média, contra 23\,ms na V3.
+filósofo comendo por vez. Por isso ela leva 3,15\,s e tem a maior espera pelos garfos:
+102\,ms em média, contra 24\,ms na V3.
 
 \begin{itemize}
   \item \textbf{V0:} tempo total = soma de todos os tempos ($20 \times 5 \times 50$\,ms $= 5$\,s).
         Espera zero, porque não há disputa.
-  \item \textbf{V1:} travou em 4 de 5 execuções, logo no 1.º ciclo. Como não há garantia de que
-        termine, não serve como solução.
-  \item \textbf{V2:} é correta e 1,6 vez mais rápida que a V0, porque os filósofos pensam em
+  \item \textbf{V1:} travou nas 5 execuções, logo no 1.º ciclo, sem nenhum filósofo
+        chegar a comer. Não serve como solução.
+  \item \textbf{V2:} é correta e 1,7 vez mais rápida que a V0, porque os filósofos pensam em
         paralelo. Mas as refeições ficam em fila: $100 \times 30$\,ms $= 3$\,s, praticamente o
         tempo total medido.
   \item \textbf{V3:} é correta e tem o maior grau de concorrência possível com 5 garfos
@@ -102,10 +102,10 @@ filósofo comendo por vez. Por isso ela leva 3,08\,s e tem a maior espera pelos 
 % PÁGINA 2: tabela, gráfico, prints e evidência do deadlock
 % =====================================================================
 \newpage
-\section*{Resultados experimentais \provisorio}
+\section*{Resultados experimentais}
 
-Média de 5 execuções de cada versão; entre parênteses, o desvio padrão.
-\preencher{Números de uma máquina de teste com 2 núcleos: substituir pelos do notebook do grupo.}
+Média de 5 execuções de cada versão; entre parênteses, o desvio padrão. A maior espera é a
+maior observada nas 5 execuções.
 
 \begin{center}
 \small
@@ -114,10 +114,10 @@ Média de 5 execuções de cada versão; entre parênteses, o desvio padrão.
 \textbf{Versão} & \textbf{Tempo total} & \textbf{Espera média} & \textbf{Maior espera} & \textbf{Máx.\ comendo} & \textbf{Ciclos por} \\
  & \textbf{(ms)} & \textbf{(ms)} & \textbf{(ms)} & \textbf{juntos} & \textbf{filósofo} \\
 \midrule
-V0 -- Sequencial & 5069 ($\pm$2,5) & 0,0 & 0,0 & 1 & 20 em todos \\
-V1 -- Deadlock & \multicolumn{5}{l}{travou em 4 de 5 execuções (0 ciclos concluídos nas que travaram)} \\
-\textbf{V2 -- Sinc.\ excessiva} & \textbf{3083 ($\pm$2,5)} & \textbf{100,2 ($\pm$0,1)} & \textbf{122,1} & \textbf{1} & 20 em todos \\
-V3 -- Concorrente & 1754 ($\pm$51) & 23,4 ($\pm$0,5) & 72,1 & 2 & 20 em todos \\
+V0 -- Sequencial & 5218 ($\pm$35) & 0,0 & 0,1 & 1 & 20 em todos \\
+V1 -- Deadlock & \multicolumn{5}{l}{travou nas 5 execuções (0 ciclos concluídos)} \\
+\textbf{V2 -- Sinc.\ excessiva} & \textbf{3151 ($\pm$42)} & \textbf{102,0 ($\pm$1,5)} & \textbf{153,6} & \textbf{1} & 20 em todos \\
+V3 -- Concorrente & 1719 ($\pm$61) & 24,3 ($\pm$0,6) & 75,0 & 2 & 20 em todos \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -138,8 +138,8 @@ V3 -- Concorrente & 1754 ($\pm$51) & 23,4 ($\pm$0,5) & 72,1 & 2 & 20 em todos \\
   title={Mais filósofos comendo juntos, menor o tempo total},
   title style={font=\bfseries\small},
 ]
-\addplot[fill=gray!45, draw=gray!60, bar shift=0pt] coordinates {(5069,3) (3083,2)};
-\addplot[fill=blue!55!black, draw=blue!55!black, bar shift=0pt] coordinates {(1754,1)};
+\addplot[fill=gray!45, draw=gray!60, bar shift=0pt] coordinates {(5218,3) (3151,2)};
+\addplot[fill=blue!55!black, draw=blue!55!black, bar shift=0pt] coordinates {(1719,1)};
 \draw[dashed, gray] (axis cs:3000,0.55) -- (axis cs:3000,3.45);
 \node[right, font=\scriptsize, text=gray!80!black, align=left] at (axis cs:3000,1.45)
   {3000 ms = 100 refeições em fila $\times$ 30 ms};
@@ -153,26 +153,14 @@ por que a V2 não fica abaixo de 3\,s: as 100 refeições acontecem uma de cada 
 
 \subsection*{Evidência do deadlock da V1}
 
-Saída real de uma execução que travou. Cada coluna é um filósofo:
+Print de uma execução da V1 que travou. Cada coluna é um filósofo:
 \texttt{T} = pensando, \texttt{G} = segurando um garfo, \texttt{E} = comendo.
 
-\begin{minipage}[t]{0.47\textwidth}
-\vspace{0pt}
-\begin{lstlisting}
- [P1]  [P2]  [P3]  [P4]  [P5]
-                   T1
- T1
-       T1
-       G1
-             G2
-                         G4
-                   G3
- G0
-fatal error: all goroutines are
-             asleep - deadlock!
-\end{lstlisting}
-\end{minipage}\hfill
 \begin{minipage}[t]{0.49\textwidth}
+\vspace{0pt}
+\includegraphics[width=\linewidth]{../resultados/prints/v1.png}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.47\textwidth}
 \vspace{0pt}
 \small
 \begin{tabular}{@{}cccc@{}}
@@ -193,16 +181,37 @@ direito. O runtime do Go detectou que todas as goroutines estavam bloqueadas e e
 o programa.
 \end{minipage}
 
-\subsection*{Capturas de tela}
-\preencher{Inserir aqui os prints da V0, V2 e V3 terminando e da V1 travada,
-salvos em \texttt{resultados/prints/}. Para isso, acrescente ao preâmbulo:}
-\begin{lstlisting}
-\usepackage{graphicx}
+\subsection*{Saídas das execuções}
+
+Final da saída de uma execução de cada versão que termina, no mesmo computador do print da V1.
+
+\begin{minipage}[t]{0.32\textwidth}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+V0 took 5.217196709s
+Average wait: 775ns
+Max wait:     43.75us
+Max eating together: 1
+Cycles: [20 20 20 20 20]
 \end{lstlisting}
-\preencher{e, aqui, uma linha por print:}
-\begin{lstlisting}
-\includegraphics[width=0.48\textwidth]{../resultados/prints/v3.png}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.32\textwidth}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+V2 took 3.129580542s
+Average wait: 101.243705ms
+Max wait:     124.283584ms
+Max eating together: 1
+Cycles: [20 20 20 20 20]
 \end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.32\textwidth}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+V3 took 1.757039334s
+Average wait: 23.847408ms
+Max wait:     93.237583ms
+Max eating together: 2
+Cycles: [20 20 20 20 20]
+\end{lstlisting}
+\end{minipage}
 
 % =====================================================================
 % PÁGINA 3+: conclusão e respostas
@@ -211,7 +220,7 @@ salvos em \texttt{resultados/prints/}. Para isso, acrescente ao preâmbulo:}
 \section*{Conclusão}
 
 Mais sincronização não significou mais desempenho. A V2, a mais sincronizada, é correta, mas
-levou 3083\,ms. A V3 sincroniza só o necessário e levou 1754\,ms, 43\,\% menos. O que reduziu
+levou 3151\,ms. A V3 sincroniza só o necessário e levou 1719\,ms, 45\,\% menos. O que reduziu
 o tempo total foi o grau de concorrência: 1 filósofo comendo por vez na V0 e na V2, 2 na V3.
 
 \subsection*{1. Como funciona cada solução?}
@@ -240,7 +249,7 @@ Porque as quatro condições de Coffman estão presentes ao mesmo tempo:
   \item \textbf{Sem preempção:} ninguém tira o garfo de outro; só o dono faz \texttt{Unlock}.
   \item \textbf{Espera circular:} P1 espera P2, que espera P3, \ldots, que espera P1 (tabela da página 2).
 \end{itemize}
-Isso aconteceu em 4 das 5 execuções, sempre no 1.º ciclo, porque todos pensam o mesmo tempo e
+Isso aconteceu nas 5 execuções, sempre no 1.º ciclo, porque todos pensam o mesmo tempo e
 chegam juntos aos garfos.
 
 \subsection*{5. Como V2 e V3 evitam deadlock?}
@@ -252,44 +261,44 @@ P5 disputam o G0 como primeiro garfo, e quem perde espera sem segurar nada.
 \subsection*{6. Existe possibilidade de starvation? Justifique.}
 Na V0, não: a ordem é fixa. Na V2 e na V3, é teoricamente possível, porque nada garante a vez
 de um filósofo. Nos experimentos ela não ocorreu: todos completaram 20 ciclos e a maior espera
-foi 122\,ms na V2 e 72\,ms na V3 (menos de 3 refeições). Isso acontece porque o
+foi 153,6\,ms na V2 (cerca de 5 refeições de 30\,ms) e 75,0\,ms na V3 (2,5 refeições). Isso acontece porque o
 \texttt{sync.Mutex} do Go passa a atender em ordem de chegada quando uma goroutine espera mais
 de 1\,ms, e porque cada filósofo pensa entre as refeições, dando vez aos vizinhos.
 
 \subsection*{7. Qual solução apresentou maior tempo total de execução?}
-A V0, com 5069\,ms, por ser sequencial. Entre as corretas e concorrentes, a V2 (3083\,ms).
+A V0, com 5218\,ms, por ser sequencial. Entre as corretas e concorrentes, a V2 (3151\,ms).
 
 \subsection*{8. Qual solução apresentou maior tempo de espera pelos recursos?}
-A V2: 100,2\,ms em média e 122,1\,ms no pior caso, contra 23,4\,ms e 72,1\,ms na V3. A V1 fica
+A V2: 102,0\,ms em média e 153,6\,ms no pior caso, contra 24,3\,ms e 75,0\,ms na V3. A V1 fica
 de fora, porque sua espera é infinita quando trava.
 
 \subsection*{9. Quantos filósofos conseguiram comer simultaneamente em cada solução?}
-V0: 1. V1: 0 nas execuções que travaram e 1 na que terminou. V2: 1. V3: 2, o máximo possível
+V0: 1. V1: 0, porque travou nas 5 execuções antes de qualquer refeição. V2: 1. V3: 2, o máximo possível
 com 5 garfos.
 
 \subsection*{10. Qual foi o impacto da sincronização excessiva da V2?}
 A V2 transforma as 100 refeições em uma fila: $100 \times 30$\,ms $= 3000$\,ms, quase todo o
-tempo medido (3083\,ms). Comparada com a V3, foi 76\,\% mais lenta e teve espera média 4,3 vezes
+tempo medido (3151\,ms). Comparada com a V3, foi 83\,\% mais lenta e teve espera média 4,2 vezes
 maior, sem nenhum ganho de corretude.
 
 \subsection*{11. A solução com maior sincronização foi a de melhor desempenho?}
 Não. A V2 tem mais sincronização que a V3 (um semáforo global além dos mutexes) e foi pior em
-todas as métricas de tempo: 3083\,ms contra 1754\,ms no total, e 100,2\,ms contra 23,4\,ms de
+todas as métricas de tempo: 3151\,ms contra 1719\,ms no total, e 102,0\,ms contra 24,3\,ms de
 espera média. Sincronização garante corretude, mas cada trava a mais tira concorrência.
 
 \subsection*{12. Qual é a relação entre o grau de concorrência e o tempo total?}
 Quanto maior o grau de concorrência, menor o tempo total. Com 1 filósofo ativo por vez (V0),
-5069\,ms. Com pensamento em paralelo, mas refeições em fila (V2), 3083\,ms. Com até 2 comendo
-juntos (V3), 1754\,ms.
+5218\,ms. Com pensamento em paralelo, mas refeições em fila (V2), 3151\,ms. Com até 2 comendo
+juntos (V3), 1719\,ms.
 
 \section*{Ambiente de execução}
 
 \begin{tabularx}{\textwidth}{@{}lY@{}}
 \toprule
-Linguagem e versão & Go \preencher{x.y.z} (saída de \texttt{go version}) \\
-Sistema operacional & \preencher{Windows 11 \ldots} \\
-Processador & \preencher{modelo} (Gerenciador de Tarefas $\rightarrow$ Desempenho $\rightarrow$ CPU) \\
-Núcleos disponíveis & \preencher{físicos / lógicos} \\
+Linguagem e versão & Go \preencher{(saída de \texttt{go version} na máquina das medições)} \\
+Sistema operacional & \preencher{(macOS: \texttt{sw\_vers})} \\
+Processador & \preencher{(\texttt{sysctl -n machdep.cpu.brand\_string})} \\
+Núcleos disponíveis & \preencher{(\texttt{sysctl -n hw.physicalcpu hw.logicalcpu})} \\
 Parâmetros & 5 filósofos, 20 ciclos, pensar 20\,ms, comer 30\,ms (iguais nas 4 versões) \\
 \bottomrule
 \end{tabularx}
