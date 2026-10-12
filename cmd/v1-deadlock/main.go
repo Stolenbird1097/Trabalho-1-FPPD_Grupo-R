@@ -1,9 +1,9 @@
-// V1 - Concurrent Dining Philosophers WITH deadlock
-// Each philosopher is a goroutine and each fork is a sync.Mutex.
-// Everybody takes the LEFT fork first and then the RIGHT fork.
-// If all 5 take the left fork at the same time, everybody waits forever
-// for the right fork (circular wait) -> deadlock.
-// Go detects it and stops with "fatal error: all goroutines are asleep - deadlock!"
+// V1 - Jantar dos Filósofos concorrente COM deadlock
+// Cada filósofo é uma goroutine e cada garfo é um sync.Mutex.
+// Todos pegam primeiro o garfo da ESQUERDA e depois o da DIREITA.
+// Se os 5 pegarem o garfo esquerdo ao mesmo tempo, todos esperam para sempre
+// pelo garfo direito (espera circular) -> deadlock.
+// O Go detecta e encerra com "fatal error: all goroutines are asleep - deadlock!"
 package main
 
 import (
@@ -15,13 +15,13 @@ import (
 const (
 	philosophers  = 5
 	rounds        = 20
-	time_to_think = 20 // ms (same in V0, V1, V2, V3)
-	time_to_eat   = 30 // ms (same in V0, V1, V2, V3)
+	time_to_think = 20 // ms (igual em V0, V1, V2, V3)
+	time_to_eat   = 30 // ms (igual em V0, V1, V2, V3)
 )
 
 var forks [philosophers]sync.Mutex
 
-// ---------- metrics (same code in all versions) ----------
+// ---------- métricas (mesmo código em todas as versões) ----------
 var (
 	mu                sync.Mutex
 	totalWait         time.Duration
@@ -59,7 +59,7 @@ func report(version string, elapsed time.Duration) {
 	fmt.Printf("Max wait for forks:     %s\n", maxWait)
 	fmt.Printf("Max eating together:    %d\n", maxEating)
 	fmt.Printf("Cycles per philosopher: %v\n", cycles)
-	// last line in CSV (used by scripts/executar.sh)
+	// última linha em CSV (usada por scripts/executar.sh)
 	ms := func(d time.Duration) float64 { return float64(d.Microseconds()) / 1000 }
 	fmt.Printf("%s,%.3f,%.3f,%.3f,%d,%d|%d|%d|%d|%d\n", version, ms(elapsed), ms(avg), ms(maxWait),
 		maxEating, cycles[0], cycles[1], cycles[2], cycles[3], cycles[4])
@@ -75,23 +75,23 @@ func Philosopher(id int, wg *sync.WaitGroup) {
 	right := (id + 1) % philosophers
 
 	for i := 1; i <= rounds; i++ {
-		// think
+		// pensar
 		show(id, fmt.Sprintf(" T%d", i))
 		time.Sleep(time_to_think * time.Millisecond)
 
-		// get forks: left first, then right
+		// pegar os garfos: primeiro o esquerdo, depois o direito
 		start := time.Now()
 		forks[left].Lock()
-		show(id, fmt.Sprintf(" G%d", left)) // holding left fork
-		time.Sleep(1 * time.Millisecond)    // takes a moment to reach the other fork
-		forks[right].Lock()                 // <- everybody may get stuck here
+		show(id, fmt.Sprintf(" G%d", left)) // segurando o garfo esquerdo
+		time.Sleep(1 * time.Millisecond)    // leva um instante para alcançar o outro garfo
+		forks[right].Lock()                 // <- aqui todos podem ficar presos
 		startEating(time.Since(start))
 
-		// eat
+		// comer
 		show(id, fmt.Sprintf(" E%d", i))
 		time.Sleep(time_to_eat * time.Millisecond)
 
-		// release forks
+		// soltar os garfos
 		forks[right].Unlock()
 		forks[left].Unlock()
 		stopEating(id)

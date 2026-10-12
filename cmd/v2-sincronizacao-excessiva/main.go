@@ -1,10 +1,10 @@
-// V2 - Dining Philosophers without deadlock, but with EXCESSIVE synchronization
-// Same as V1, plus a "waiter": a semaphore with only 1 permit.
-// A philosopher asks the waiter before taking the forks and only gives
-// the permit back after eating. So only ONE philosopher eats at a time,
-// even when two of them don't share any fork.
-// Go has no native semaphore: it is made with a buffered channel of size 1
-// (send = wait/P, receive = signal/V).
+// V2 - Jantar dos Filósofos sem deadlock, mas com sincronização EXCESSIVA
+// Igual à V1, mais um "garçom": um semáforo com apenas 1 permissão.
+// O filósofo pede ao garçom antes de pegar os garfos e só devolve a
+// permissão depois de comer. Assim só UM filósofo come por vez,
+// mesmo quando dois deles não dividem nenhum garfo.
+// Go não tem semáforo nativo: ele é feito com um canal com buffer de tamanho 1
+// (enviar = wait/P, receber = signal/V).
 package main
 
 import (
@@ -16,14 +16,14 @@ import (
 const (
 	philosophers  = 5
 	rounds        = 20
-	time_to_think = 20 // ms (same in V0, V1, V2, V3)
-	time_to_eat   = 30 // ms (same in V0, V1, V2, V3)
+	time_to_think = 20 // ms (igual em V0, V1, V2, V3)
+	time_to_eat   = 30 // ms (igual em V0, V1, V2, V3)
 )
 
 var forks [philosophers]sync.Mutex
-var waiter = make(chan struct{}, 1) // semaphore with 1 permit
+var waiter = make(chan struct{}, 1) // semáforo com 1 permissão
 
-// ---------- metrics (same code in all versions) ----------
+// ---------- métricas (mesmo código em todas as versões) ----------
 var (
 	mu                sync.Mutex
 	totalWait         time.Duration
@@ -61,7 +61,7 @@ func report(version string, elapsed time.Duration) {
 	fmt.Printf("Max wait for forks:     %s\n", maxWait)
 	fmt.Printf("Max eating together:    %d\n", maxEating)
 	fmt.Printf("Cycles per philosopher: %v\n", cycles)
-	// last line in CSV (used by scripts/executar.sh)
+	// última linha em CSV (usada por scripts/executar.sh)
 	ms := func(d time.Duration) float64 { return float64(d.Microseconds()) / 1000 }
 	fmt.Printf("%s,%.3f,%.3f,%.3f,%d,%d|%d|%d|%d|%d\n", version, ms(elapsed), ms(avg), ms(maxWait),
 		maxEating, cycles[0], cycles[1], cycles[2], cycles[3], cycles[4])
@@ -77,26 +77,26 @@ func Philosopher(id int, wg *sync.WaitGroup) {
 	right := (id + 1) % philosophers
 
 	for i := 1; i <= rounds; i++ {
-		// think
+		// pensar
 		show(id, fmt.Sprintf(" T%d", i))
 		time.Sleep(time_to_think * time.Millisecond)
 
-		// get forks: first the waiter's permit, then left and right
+		// pegar os garfos: primeiro a permissão do garçom, depois esquerdo e direito
 		start := time.Now()
-		waiter <- struct{}{} // wait (P): blocks while someone else is eating
+		waiter <- struct{}{} // wait (P): bloqueia enquanto outro filósofo está comendo
 		forks[left].Lock()
 		forks[right].Lock()
 		startEating(time.Since(start))
 
-		// eat
+		// comer
 		show(id, fmt.Sprintf(" E%d", i))
 		time.Sleep(time_to_eat * time.Millisecond)
 
-		// release forks and only then the permit
+		// soltar os garfos e só então a permissão
 		forks[right].Unlock()
 		forks[left].Unlock()
 		stopEating(id)
-		<-waiter // signal (V)
+		<-waiter // signal (V): libera a vez
 	}
 }
 
