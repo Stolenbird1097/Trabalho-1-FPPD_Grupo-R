@@ -1,8 +1,8 @@
 # Ambiente de execução
 
-- Linguagem e versão: Go 1.27.2 (`go version go1.27.2 windows/amd64`)
-- Sistema operacional: Windows (64 bits) — conferir a versão com `winver`
-- Processador:
-- Número de cores disponíveis:
-- Compilação: `go build -o bin/<versao> ./cmd/<versao>`
-- Execução: `./bin/<versao>` ou `./scripts/executar.sh`
+- Linguagem e versão: Go 1.27.0 (`go version go1.27.0 darwin/arm64`)
+- Sistema operacional: macOS 27.0.1 (build 26A434), arquitetura ARM64
+- Processador: Apple M3
+- Número de núcleos físicos: 8
+- Número de processadores lógicos: 8
+- Compilação e execução: `go run ./cmd/<versao>`
