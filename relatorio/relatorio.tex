@@ -46,13 +46,13 @@
 \toprule
 Grupo & R \\
 Integrantes & Arthur Pimentel \textperiodcentered{} Raffaella Aranha \textperiodcentered{} Tiago Prudencio \\
-Repositório Git & \preencher{link do repositório} (pasta \texttt{cmd/}, uma subpasta por versão) \\
+Repositório Git & \url{https://github.com/Stolenbird1097/Trabalho-1-FPPD_Grupo-R} (pasta \texttt{cmd/}, uma subpasta por versão) \\
 \bottomrule
 \end{tabularx}
 
 \section*{Descrição das soluções e mecanismos de sincronização}
 
-As quatro versões partem do exemplo sequencial do Moodle (\texttt{filo\_seq.go}) e mudam
+O problema foi proposto por Dijkstra~\cite{dijkstra1971}. As quatro versões partem do exemplo sequencial do Moodle (\texttt{filo\_seq.go}) e mudam
 só a forma de pegar os garfos. Todas usam 5 filósofos, 20 ciclos cada, 20\,ms para pensar
 e 30\,ms para comer. Cada ciclo é: pensar $\rightarrow$ pegar os garfos $\rightarrow$ comer
 $\rightarrow$ soltar os garfos.
@@ -77,7 +77,7 @@ V3 -- Concorrente & Igual à V1, mas todos pegam primeiro o garfo de menor núme
 \end{tabularx}
 
 As métricas usam um \texttt{sync.Mutex} próprio, porque os 5 filósofos atualizam os mesmos
-contadores ao mesmo tempo. O tempo é medido com \texttt{time.Now()} e \texttt{time.Since()}.
+contadores ao mesmo tempo. O tempo é medido com \texttt{time.Now()} e \texttt{time.Since()}, que usam o relógio monotônico do sistema~\cite{gotime}.
 
 \section*{Análise comparativa}
 
@@ -236,13 +236,14 @@ global. Na V3, ordenação global dos recursos. Em todas, uma barreira de térmi
 
 \subsection*{3. Como esses mecanismos são implementados em Go?}
 O lock de cada garfo é um \texttt{sync.Mutex} (\texttt{Lock}/\texttt{Unlock}). A barreira é um
-\texttt{sync.WaitGroup} (\texttt{Add}, \texttt{Done}, \texttt{Wait}). Go não tem semáforo na
-biblioteca padrão, então o semáforo da V2 foi adaptado com um canal com buffer de 1:
+\texttt{sync.WaitGroup} (\texttt{Add}, \texttt{Done}, \texttt{Wait})~\cite{gosync,donovan2015,coxbuday2017}. Go não tem semáforo na
+biblioteca padrão, então o semáforo da V2 foi adaptado com um canal com buffer de 1, técnica descrita
+na documentação oficial~\cite{effectivego}; os canais de Go seguem o modelo CSP de Hoare~\cite{hoare1978}:
 \texttt{waiter <- struct\{\}\{\}} é o P (wait) e \texttt{<-waiter} é o V (signal).
 A ordenação da V3 é só um \texttt{if} que troca a ordem dos dois garfos.
 
 \subsection*{4. Por que ocorre deadlock na V1?}
-Porque as quatro condições de Coffman estão presentes ao mesmo tempo:
+Porque as quatro condições de Coffman~\cite{coffman1971,andrews1991,coxbuday2017} estão presentes ao mesmo tempo:
 \begin{itemize}
   \item \textbf{Exclusão mútua:} um mutex só pode estar com uma goroutine.
   \item \textbf{Segura e espera:} cada filósofo segura o garfo esquerdo enquanto espera o direito.
@@ -255,15 +256,18 @@ chegam juntos aos garfos.
 \subsection*{5. Como V2 e V3 evitam deadlock?}
 A V2 quebra o ``segura e espera'': só quem tem a permissão do garçom pega garfos, então nunca
 encontra um garfo ocupado. A V3 quebra a espera circular: como todos pegam primeiro o garfo de
-menor número, um ciclo exigiria $G_a < G_b < \dots < G_a$, o que é impossível. Na prática, P1 e
+menor número, um ciclo exigiria $G_a < G_b < \dots < G_a$, o que é impossível. Essa é a solução por
+hierarquia de recursos de Dijkstra~\cite{dijkstra1971,andrews1991}. Na prática, P1 e
 P5 disputam o G0 como primeiro garfo, e quem perde espera sem segurar nada.
 
 \subsection*{6. Existe possibilidade de starvation? Justifique.}
 Na V0, não: a ordem é fixa. Na V2 e na V3, é teoricamente possível, porque nada garante a vez
 de um filósofo. Nos experimentos ela não ocorreu: todos completaram 20 ciclos e a maior espera
 foi 153,6\,ms na V2 (cerca de 5 refeições de 30\,ms) e 75,0\,ms na V3 (2,5 refeições). Isso acontece porque o
-\texttt{sync.Mutex} do Go passa a atender em ordem de chegada quando uma goroutine espera mais
-de 1\,ms, e porque cada filósofo pensa entre as refeições, dando vez aos vizinhos.
+\texttt{sync.Mutex} do Go passa a atender em ordem de chegada (``modo de inanição'') quando uma
+goroutine espera mais de 1\,ms~\cite{gomutexsrc}, e porque cada filósofo pensa entre as refeições,
+dando vez aos vizinhos~\cite{coxbuday2017}. Há soluções com garantia formal contra starvation, como a de
+Chandy e Misra~\cite{chandy1984}, que não foram necessárias neste experimento.
 
 \subsection*{7. Qual solução apresentou maior tempo total de execução?}
 A V0, com 5218\,ms, por ser sequencial. Entre as corretas e concorrentes, a V2 (3151\,ms).
@@ -295,10 +299,7 @@ juntos (V3), 1719\,ms.
 
 \begin{tabularx}{\textwidth}{@{}lY@{}}
 \toprule
-Linguagem e versão & Go \preencher{(saída de \texttt{go version} na máquina das medições)} \\
-Sistema operacional & \preencher{(macOS: \texttt{sw\_vers})} \\
-Processador & \preencher{(\texttt{sysctl -n machdep.cpu.brand\_string})} \\
-Núcleos disponíveis & \preencher{(\texttt{sysctl -n hw.physicalcpu hw.logicalcpu})} \\
+Linguagem e versão & Go 1.27.2 (\texttt{go version go1.27.2 windows/amd64}) \\
 Parâmetros & 5 filósofos, 20 ciclos, pensar 20\,ms, comer 30\,ms (iguais nas 4 versões) \\
 \bottomrule
 \end{tabularx}
@@ -310,5 +311,44 @@ go run ./cmd/v1-deadlock                             # compila e executa
 go vet ./... && gofmt -l .                           # confere o codigo
 ./scripts/executar.sh                                # 5 execucoes de cada
 \end{lstlisting}
+
+\section*{Declaração de Uso de Inteligência Artificial}
+
+Declara-se o uso de Inteligência Artificial Generativa (modelo Claude, da Anthropic) como ferramenta
+de suporte durante o desenvolvimento deste projeto e a redação deste documento, nas funções de apoio
+à implementação do código, organização e correção ortográfica do relatório, cálculo das estatísticas a partir das
+medições do grupo. Em conformidade com a Portaria CNPq n.º 2.664/2026~\cite{cnpq2026},
+os autores assumem responsabilidade integral sobre a veracidade, originalidade e validação de todo o
+conteúdo e código aqui apresentados.
+
+\renewcommand{\refname}{Referências}
+\begin{thebibliography}{99}\sloppy
+\small
+\bibitem{andrews1991} ANDREWS, Gregory R. \textit{Concurrent Programming: Principles and Practice}.
+  Pearson, 1991.
+\bibitem{coxbuday2017} COX-BUDAY, Katherine. \textit{Concurrency in Go: Tools and Techniques for
+  Developers}. O'Reilly Media, Inc., 2017.
+\bibitem{dijkstra1971} DIJKSTRA, E. W. Hierarchical ordering of sequential processes.
+  \textit{Acta Informatica}, v.~1, n.~2, p.~115--138, 1971. 
+\bibitem{coffman1971} COFFMAN, E. G.; ELPHICK, M.; SHOSHANI, A. System deadlocks.
+  \textit{ACM Computing Surveys}, v.~3, n.~2, p.~67--78, jun. 1971.
+\bibitem{hoare1978} HOARE, C. A. R. Communicating sequential processes.
+  \textit{Communications of the ACM}, v.~21, n.~8, p.~666--677, ago. 1978.
+\bibitem{chandy1984} CHANDY, K. M.; MISRA, J. The drinking philosophers problem.
+  \textit{ACM Transactions on Programming Languages and Systems}, v.~6, n.~4, p.~632--646, 1984.
+  DOI: 10.1145/1780.1804.
+\bibitem{donovan2015} DONOVAN, A. A. A.; KERNIGHAN, B. W. \textit{The Go Programming Language}.
+  Addison-Wesley, 2015.
+\bibitem{gosync} THE GO AUTHORS. Package \texttt{sync}. Disponível em: \url{https://pkg.go.dev/sync}.
+\bibitem{gomutexsrc} THE GO AUTHORS. Código-fonte do \texttt{sync.Mutex} (comentário ``Mutex fairness'').
+  Disponível em: \url{https://github.com/golang/go/blob/master/src/internal/sync/mutex.go}.
+\bibitem{effectivego} THE GO AUTHORS. \textit{Effective Go}: Channels. Disponível em:
+  \url{https://go.dev/doc/effective_go}.
+\bibitem{cnpq2026} CONSELHO NACIONAL DE DESENVOLVIMENTO CIENTÍFICO E TECNOLÓGICO (CNPq).
+  Portaria CNPq n.º 2.664, de 6 de março de 2026. \textit{Diário Oficial da União}, 2026. Disponível em:
+  \url{https://www.in.gov.br/web/dou/-/portaria-cnpq-n-2.664-de-6-de-marco-de-2026-691779232}.
+\bibitem{gotime} THE GO AUTHORS. Package \texttt{time}: Monotonic Clocks. Disponível em:
+  \url{https://pkg.go.dev/time}.
+\end{thebibliography}
 
 \end{document}
