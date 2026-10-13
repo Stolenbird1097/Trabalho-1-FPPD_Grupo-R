@@ -46,17 +46,18 @@
 \toprule
 Grupo & R \\
 Integrantes & Arthur Pimentel \textperiodcentered{} Raffaella Aranha \textperiodcentered{} Tiago Prudencio \\
-Repositório Git & \url{https://github.com/Stolenbird1097/Trabalho-1-FPPD_Grupo-R} (pasta \texttt{cmd/}, uma subpasta por versão) \\
+Repositório Git & \url{https://github.com/Stolenbird1097/Trabalho-1-FPPD_Grupo-R} (pasta \texttt{codigos}) \\
 \bottomrule
 \end{tabularx}
 
 \section*{Descrição das soluções e mecanismos de sincronização}
 
-O problema foi proposto por Dijkstra~\cite{dijkstra1971}. As quatro versões partem do exemplo sequencial do Moodle (\texttt{filo\_seq.go}) e mudam
+O problema foi proposto por Dijkstra~\cite{dijkstra1971,tanenbaum2014}. As quatro versões partem do exemplo sequencial do Moodle (\texttt{filo\_seq.go}) e mudam
 só a forma de pegar os garfos. Todas usam 5 filósofos, 20 ciclos cada, 20\,ms para pensar
 e 30\,ms para comer. Cada ciclo é: pensar $\rightarrow$ pegar os garfos $\rightarrow$ comer
 $\rightarrow$ soltar os garfos.
 
+{\small
 \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.6cm}YYY@{}}
 \toprule
 \textbf{Versão} & \textbf{Como funciona} & \textbf{Mecanismo} & \textbf{Implementação em Go} \\
@@ -75,6 +76,7 @@ V3 -- Concorrente & Igual à V1, mas todos pegam primeiro o garfo de menor núme
   Ordenação global dos recursos + mutex por garfo & \texttt{sync.Mutex} por garfo; o F5 troca a ordem (G0 antes de G4) \\
 \bottomrule
 \end{tabularx}
+}
 
 As métricas usam um \texttt{sync.Mutex} próprio, porque os 5 filósofos atualizam os mesmos
 contadores ao mesmo tempo. O tempo é medido com \texttt{time.Now()} e \texttt{time.Since()}, que usam o relógio monotônico do sistema~\cite{gotime}.
@@ -243,7 +245,7 @@ na documentação oficial~\cite{effectivego}; os canais de Go seguem o modelo CS
 A ordenação da V3 é só um \texttt{if} que troca a ordem dos dois garfos.
 
 \subsection*{4. Por que ocorre deadlock na V1?}
-Porque as quatro condições de Coffman~\cite{coffman1971,andrews1991,coxbuday2017} estão presentes ao mesmo tempo:
+Porque as quatro condições de Coffman~\cite{coffman1971,tanenbaum2014,andrews1991,coxbuday2017} estão presentes ao mesmo tempo:
 \begin{itemize}
   \item \textbf{Exclusão mútua:} um mutex só pode estar com uma goroutine.
   \item \textbf{Segura e espera:} cada filósofo segura o garfo esquerdo enquanto espera o direito.
@@ -299,12 +301,16 @@ juntos (V3), 1719\,ms.
 
 \begin{tabularx}{\textwidth}{@{}lY@{}}
 \toprule
-Linguagem e versão & Go 1.27.2 (\texttt{go version go1.27.2 windows/amd64}) \\
+Linguagem e versão & Go 1.27.0 (\texttt{go version go1.27.0 darwin/arm64}) \\
+Sistema operacional & macOS 27.0.1 (build 26A434), arquitetura ARM64 \\
+Processador & Apple M3 \\
+Núcleos disponíveis & 8 núcleos físicos / 8 processadores lógicos \\
 Parâmetros & 5 filósofos, 20 ciclos, pensar 20\,ms, comer 30\,ms (iguais nas 4 versões) \\
 \bottomrule
 \end{tabularx}
 
 \begin{lstlisting}
+go run ./cmd/<versao>                                # compila e executa
 go build -o bin/v3-concorrente ./cmd/v3-concorrente  # compila
 ./bin/v3-concorrente                                 # executa
 go run ./cmd/v1-deadlock                             # compila e executa
@@ -326,6 +332,8 @@ conteúdo e código aqui apresentados.
 \small
 \bibitem{andrews1991} ANDREWS, Gregory R. \textit{Concurrent Programming: Principles and Practice}.
   Pearson, 1991.
+\bibitem{tanenbaum2014} TANENBAUM, Andrew S.; BOS, Herbert. \textit{Modern Operating Systems}. 4.~ed.
+  Pearson, 2014.
 \bibitem{coxbuday2017} COX-BUDAY, Katherine. \textit{Concurrency in Go: Tools and Techniques for
   Developers}. O'Reilly Media, Inc., 2017.
 \bibitem{dijkstra1971} DIJKSTRA, E. W. Hierarchical ordering of sequential processes.
