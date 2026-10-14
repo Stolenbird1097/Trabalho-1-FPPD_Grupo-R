@@ -15,7 +15,7 @@ EXT="$(go env GOEXE)"   # ".exe" no Windows, vazio no Linux/Mac
 
 echo "Compilando..."
 for v in v0-sequencial v1-deadlock v2-sincronizacao-excessiva v3-concorrente; do
-  go build -o "bin/$v$EXT" "./cmd/$v"
+  go build -o "bin/$v$EXT" "./codigos/$v"
 done
 
 echo "versao,total_ms,espera_media_ms,espera_max_ms,max_simultaneos,ciclos_por_filosofo" > "$SAIDA"

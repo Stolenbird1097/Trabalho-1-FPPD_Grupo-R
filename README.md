@@ -6,15 +6,15 @@ Quatro versões do problema dos filósofos jantando, medidas com as mesmas métr
 
 | Versão | Pasta | Ideia |
 |---|---|---|
-| V0 | `cmd/v0-sequencial` | Baseline sem concorrência (base: versão do Moodle) |
-| V1 | `cmd/v1-deadlock` | Concorrente, sujeita a deadlock |
-| V2 | `cmd/v2-sincronizacao-excessiva` | Sem deadlock, mas limita demais a concorrência |
-| V3 | `cmd/v3-concorrente` | Sem deadlock e com mais concorrência |
+| V0 | `codigos/v0-sequencial` | Baseline sem concorrência (base: versão do Moodle) |
+| V1 | `codigos/v1-deadlock` | Concorrente, sujeita a deadlock |
+| V2 | `codigos/v2-sincronizacao-excessiva` | Sem deadlock, mas limita demais a concorrência |
+| V3 | `codigos/v3-concorrente` | Sem deadlock e com mais concorrência |
 
 ## Estrutura
 
 ```
-cmd/                 uma pasta por versão (cada uma tem seu main.go)
+codigos/             uma pasta por versão (cada uma tem seu main.go)
 internal/config      5 filósofos, 20 ciclos, tempos de pensar/comer (iguais para todas)
 internal/metrics     as 5 métricas do enunciado + saída em CSV
 scripts/             criar_issues.sh (organiza o GitHub) e executar.sh (5 execuções → CSV)
@@ -28,9 +28,9 @@ CHECKLIST.md         tudo que o enunciado cobra, item por item
 
 ```bash
 go version                          # registrar no relatório
-go run ./cmd/v3-concorrente         # roda uma versão
-go run ./cmd/v1-deadlock -v         # modo verboso (para a evidência do deadlock)
-go run -race ./cmd/v2-sincronizacao-excessiva   # checa condições de corrida
+go run ./codigos/v3-concorrente         # roda uma versão
+go run ./codigos/v1-deadlock -v         # modo verboso (para a evidência do deadlock)
+go run -race ./codigos/v2-sincronizacao-excessiva   # checa condições de corrida
 ./scripts/executar.sh               # 5 execuções de cada versão → resultados/resultados.csv
 ```
 
