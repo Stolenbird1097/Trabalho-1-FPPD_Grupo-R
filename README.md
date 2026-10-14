@@ -1,6 +1,6 @@
 # Trabalho 1 – Filósofos Jantando (Concorrência e Sincronização em Go)
 
-Integrantes: _Nome A_ · _Nome B_ · _Nome C_
+Integrantes: Arthur Pimentel · Raffaella Aranha · Tiago Prudencio
 
 Quatro versões do problema dos filósofos jantando, medidas com as mesmas métricas e os mesmos tempos.
 
@@ -19,7 +19,6 @@ internal/config      5 filósofos, 20 ciclos, tempos de pensar/comer (iguais par
 internal/metrics     as 5 métricas do enunciado + saída em CSV
 scripts/             criar_issues.sh (organiza o GitHub) e executar.sh (5 execuções → CSV)
 resultados/          CSV, tabela, gráficos e prints
-relatorio/           ambiente.md, rascunhos e o PDF final
 apresentacao/        banco de perguntas e roteiro de execução ao vivo
 CHECKLIST.md         tudo que o enunciado cobra, item por item
 ```
@@ -50,25 +49,3 @@ m.Iniciar()
 m.Finalizar()
 if cfg.CSV { fmt.Println(m.LinhaCSV()) } else { m.Imprimir() }
 ```
-
-## Divisão do trabalho
-
-| | Pessoa A | Pessoa B | Pessoa C |
-|---|---|---|---|
-| Código | Setup, config/métricas, **V0**, **V2** | **V1**, **V3** | Revisão cruzada, CI |
-| Experimentos | Investigação da V2 | Evidência do deadlock da V1 | Script, 5 execuções, tabela, gráficos |
-| Relatório | Perguntas 1–3 de V0/V2 | Perguntas 1–6 de V1/V3 | Ambiente, págs. 1 e 2, perguntas 7–12 |
-| Arguição oral | Treina respostas sobre V0/V2 | Roteiro de execução ao vivo | Banco de perguntas |
-
-A apresentação é oral, sem slides: uma pessoa responde às perguntas da professora. Conclusão, revisão final do PDF e simulação de arguição são de todos, e quem for apresentar precisa dominar as quatro versões e as métricas (também cai na Prova 1).
-
-## Fluxo de trabalho
-
-1. Pegue uma issue e crie uma branch: `git switch -c v1-deadlock`
-2. Commits pequenos; antes do push: `gofmt -w . && go vet ./...`
-3. Abra um Pull Request com `Closes #N`; outra pessoa revisa e aprova
-4. Merge na `main` → a issue fecha sozinha e o quadro se atualiza
-
-## Ambiente de execução
-
-Ver `relatorio/ambiente.md`.
